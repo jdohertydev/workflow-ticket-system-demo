@@ -3,8 +3,8 @@
 Interactive, recruiter-facing demo of a lightweight workflow ticket system for
 a software development team.
 
-The demo mirrors the user experience of the full Flask/SQLAlchemy project while
-remaining completely isolated from its backend and database.
+The demo mirrors the user experience of a fuller Flask/SQLAlchemy implementation
+while remaining completely isolated from its backend and database.
 
 ## Live-demo architecture
 
@@ -20,9 +20,9 @@ This repository is intentionally static:
 - browser-local changes through `localStorage`
 - one-click reset to the original fictional dataset
 
-The full implementation, including Flask, SQLAlchemy, migrations, CSRF
-protection, server-side validation and automated tests, is maintained in
-[flask-sqlalchemy-task-manager](https://github.com/jdohertydev/flask-sqlalchemy-task-manager).
+The fuller implementation includes Flask, SQLAlchemy, migrations, CSRF
+protection, server-side validation and automated tests. It is maintained
+separately from this public recruiter demo.
 
 ## Demo features
 
