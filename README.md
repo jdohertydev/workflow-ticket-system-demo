@@ -6,6 +6,8 @@ A fast, functional recruiter demo of a lightweight internal ticketing system for
 
 Create tickets, edit them, search and filter the queue, change priorities and statuses, delete work, refresh the page and keep your changes, then use **Reset Demo** to restore the original fictional dataset.
 
+[![Workflow Ticket System Demo](assets/screenshots/workflow-ticket-system-demo-overview.png)](https://workflow-ticket-system-demo.vercel.app/)
+
 ## Why this exists
 
 This started with an old Flask/SQLAlchemy task-manager project I had built while learning.
