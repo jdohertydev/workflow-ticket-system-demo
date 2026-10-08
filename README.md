@@ -3,6 +3,13 @@
 Interactive, recruiter-facing demo of a lightweight workflow ticket system for
 a software development team.
 
+## Live demo
+
+**[Open the live demo](https://workflow-ticket-system-demo.vercel.app/)**
+
+The demo is hosted on Vercel and uses fictional data only. Changes are stored
+in the visitor's browser and can be restored with **Reset Demo**.
+
 The demo mirrors the user experience of a fuller Flask/SQLAlchemy implementation
 while remaining completely isolated from its backend and database.
 
