@@ -16,7 +16,7 @@ It worked, but as a portfolio piece it was pretty basic — and, frankly, a bit 
 
 I wanted to see how quickly I could turn that starting point into something that felt more like a real internal software product: clear enough to understand immediately, useful enough to interact with, and safe enough to put in front of a recruiter.
 
-Using **OpenAI Codex as an implementation partner**, I redesigned the idea around a small software team's actual workflow and built this public demo in **under an hour**.
+Using **OpenAI Codex as an implementation partner**, I redesigned the idea around a small software team's actual workflow. Once the backend project had been refactored, I built this separate public recruiter demo in **under an hour**.
 
 The point was not to build a Jira clone. It was to show how quickly I can take an existing codebase, define a better product direction, use AI effectively, make sensible technical decisions and get to a working result.
 
