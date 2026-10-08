@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="Interactive browser-based demo of a software-house workflow ticket system."
+  >
+  <title>Workflow Ticket System Demo</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous"
+  >
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    rel="stylesheet"
+  >
+  <link href="assets/styles.css" rel="stylesheet">
+</head>
+<body>
+  <a class="visually-hidden-focusable skip-link" href="#main">
+    Skip to content
+  </a>
+
+  <nav
+    class="navbar navbar-expand-md bg-white border-bottom sticky-top"
+    aria-label="Main navigation"
+  >
+    <div class="container-xl">
+      <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#/">
+        <span class="brand-icon" aria-hidden="true">
+          <i class="bi bi-stack"></i>
+        </span>
+        Workflow
+      </a>
+
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navigation"
+        aria-controls="navigation"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navigation">
+        <ul class="navbar-nav me-auto ms-md-4 gap-md-2">
+          <li class="nav-item">
+            <a class="nav-link" data-nav="overview" href="#/">
+              <i class="bi bi-grid me-1" aria-hidden="true"></i>
+              Overview
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-nav="tickets" href="#/tickets">
+              <i class="bi bi-inbox me-1" aria-hidden="true"></i>
+              Tickets
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-nav="projects" href="#/projects">
+              <i class="bi bi-folder2 me-1" aria-hidden="true"></i>
+              Projects
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-nav="categories" href="#/categories">
+              <i class="bi bi-tags me-1" aria-hidden="true"></i>
+              Categories
+            </a>
+          </li>
+        </ul>
+
+        <div class="d-flex flex-column flex-md-row gap-2 my-2">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            id="resetDemo"
+            type="button"
+          >
+            <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
+            Reset demo
+          </button>
+          <a class="btn btn-primary btn-sm" href="#/tickets/new">
+            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+            New ticket
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="demo-banner border-bottom">
+    <div
+      class="container-xl py-2 d-flex flex-wrap justify-content-between gap-2 small"
+    >
+      <span>
+        <i class="bi bi-shield-check me-1" aria-hidden="true"></i>
+        <strong>Static recruiter demo.</strong>
+        Fictional data only; changes stay in this browser.
+      </span>
+      <a
+        href="https://github.com/jdohertydev/flask-sqlalchemy-task-manager"
+        target="_blank"
+        rel="noreferrer"
+      >
+        View the Flask/SQLAlchemy project
+        <i class="bi bi-box-arrow-up-right ms-1" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+
+  <main class="container-xl py-4 py-lg-5" id="main" tabindex="-1">
+    <div id="alertRegion" aria-live="polite"></div>
+    <div id="app"></div>
+  </main>
+
+  <footer
+    class="container-xl mt-auto py-3 small text-secondary d-flex flex-wrap justify-content-between gap-2 border-top"
+  >
+    <span>Workflow <span class="mx-1">/</span> Browser demo</span>
+    <span>No backend · No shared data</span>
+  </footer>
+
+  <div
+    class="modal fade"
+    id="deleteModal"
+    tabindex="-1"
+    aria-labelledby="deleteModalTitle"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="deleteModalTitle">
+            Confirm deletion
+          </h2>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Cancel deletion"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <p>Delete <strong id="deleteName">this ticket</strong>?</p>
+          <p class="text-secondary mb-0">
+            This only removes the ticket from your browser. Reset demo restores
+            the original dataset.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-danger" type="button" id="confirmDelete">
+            Delete ticket
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="modal fade"
+    id="resetModal"
+    tabindex="-1"
+    aria-labelledby="resetModalTitle"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="resetModalTitle">
+            Reset demo data?
+          </h2>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Cancel reset"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">
+            This discards your browser-local changes and restores the original
+            fictional tickets.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button class="btn btn-primary" type="button" id="confirmReset">
+            Reset demo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+    crossorigin="anonymous"
+  ></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
