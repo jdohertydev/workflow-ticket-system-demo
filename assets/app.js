@@ -12,6 +12,7 @@ const ENVIRONMENTS = [
   "Not Applicable",
 ];
 
+let persistenceAvailable = true;
 let state = loadData();
 let pendingAlert = null;
 let pendingDeleteId = null;
@@ -233,34 +234,118 @@ function buildInitialData() {
   };
 }
 
-function loadData() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      const initial = buildInitialData();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-      return initial;
-    }
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
 
-    const parsed = JSON.parse(stored);
-    if (
-      !Array.isArray(parsed.projects) ||
-      !Array.isArray(parsed.categories) ||
-      !Array.isArray(parsed.tickets)
-    ) {
-      throw new Error("Invalid demo data shape");
-    }
-    return parsed;
-  } catch (error) {
-    console.warn("Resetting invalid browser-local demo data.", error);
-    const initial = buildInitialData();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-    return initial;
+function isRequiredString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasValidUniqueIds(records) {
+  return (
+    Array.isArray(records) &&
+    records.every(
+      (record) =>
+        isRecord(record) && Number.isSafeInteger(record.id) && record.id > 0,
+    ) &&
+    new Set(records.map((record) => record.id)).size === records.length
+  );
+}
+
+function isTimestamp(value) {
+  return (
+    typeof value === "string" &&
+    Number.isFinite(Date.parse(value)) &&
+    new Date(value).toISOString() === value
+  );
+}
+
+function isDueDate(value) {
+  return (
+    typeof value === "string" &&
+    (value === "" ||
+      (/^\d{4}-\d{2}-\d{2}$/.test(value) &&
+        isTimestamp(`${value}T00:00:00.000Z`)))
+  );
+}
+
+function isValidData(data) {
+  if (
+    !isRecord(data) ||
+    ![data.projects, data.categories].every(
+      (records) =>
+        hasValidUniqueIds(records) &&
+        records.length > 0 &&
+        records.every((record) => isRequiredString(record.name)),
+    ) ||
+    !hasValidUniqueIds(data.tickets)
+  ) {
+    return false;
+  }
+
+  const projectIds = new Set(data.projects.map((project) => project.id));
+  const categoryIds = new Set(data.categories.map((category) => category.id));
+  return data.tickets.every(
+    (ticket) =>
+      isRequiredString(ticket.title) &&
+      isRequiredString(ticket.description) &&
+      typeof ticket.assignee === "string" &&
+      STATUSES.includes(ticket.status) &&
+      PRIORITIES.includes(ticket.priority) &&
+      TICKET_TYPES.includes(ticket.type) &&
+      ENVIRONMENTS.includes(ticket.environment) &&
+      projectIds.has(ticket.projectId) &&
+      categoryIds.has(ticket.categoryId) &&
+      isTimestamp(ticket.createdAt) &&
+      isTimestamp(ticket.updatedAt) &&
+      isDueDate(ticket.dueDate),
+  );
+}
+
+function disablePersistence() {
+  persistenceAvailable = false;
+  document.getElementById("persistenceNotice").hidden = false;
+}
+
+function persistData(data) {
+  if (!persistenceAvailable) {
+    return;
+  }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    disablePersistence();
   }
 }
 
+function loadData() {
+  let stored;
+  try {
+    stored = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    disablePersistence();
+    return buildInitialData();
+  }
+
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (isValidData(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // Invalid JSON is replaced with the standard fictional dataset below.
+    }
+  }
+
+  const initial = buildInitialData();
+  persistData(initial);
+  return initial;
+}
+
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  persistData(state);
 }
 
 function escapeHtml(value) {
@@ -326,7 +411,7 @@ function slug(value) {
 
 function statusBadge(status) {
   return `
-    <span class="badge status-${slug(status)}">
+    <span class="badge status-${escapeHtml(slug(status))}">
       <span class="status-dot" aria-hidden="true"></span>${escapeHtml(status)}
     </span>
   `;
@@ -334,7 +419,7 @@ function statusBadge(status) {
 
 function priorityBadge(priority) {
   return `
-    <span class="badge priority-${slug(priority)}">
+    <span class="badge priority-${escapeHtml(slug(priority))}">
       ${escapeHtml(priority)}
     </span>
   `;
@@ -551,6 +636,7 @@ function filteredTickets(params) {
     priority: params.get("priority") ?? "",
     type: params.get("type") ?? "",
     project: params.get("project") ?? "",
+    category: params.get("category") ?? "",
     view: params.get("view") ?? "",
   };
 
@@ -591,6 +677,17 @@ function filteredTickets(params) {
     );
   } else {
     filters.project = "";
+  }
+
+  const categoryIds = new Set(
+    state.categories.map((category) => String(category.id)),
+  );
+  if (categoryIds.has(filters.category)) {
+    tickets = tickets.filter(
+      (ticket) => String(ticket.categoryId) === filters.category,
+    );
+  } else {
+    filters.category = "";
   }
 
   if (["open", "critical", "overdue", "unassigned"].includes(filters.view)) {
@@ -655,7 +752,7 @@ function renderTickets(params) {
       ${viewLabel}
       <input type="hidden" name="view" value="${escapeHtml(filters.view)}">
       <div class="row g-3 align-items-end">
-        <div class="col-12 col-lg-4">
+        <div class="col-12">
           <label class="form-label" for="q">Search tickets</label>
           <input
             class="form-control"
@@ -667,25 +764,25 @@ function renderTickets(params) {
             placeholder="Number, title, description or assignee"
           >
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg">
           <label class="form-label" for="status">Status</label>
           <select class="form-select" id="status" name="status">
             ${optionList(STATUSES, filters.status, "All status")}
           </select>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg">
           <label class="form-label" for="priority">Priority</label>
           <select class="form-select" id="priority" name="priority">
             ${optionList(PRIORITIES, filters.priority, "All priority")}
           </select>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg">
           <label class="form-label" for="type">Type</label>
           <select class="form-select" id="type" name="type">
             ${optionList(TICKET_TYPES, filters.type, "All type")}
           </select>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg">
           <label class="form-label" for="project">Project</label>
           <select class="form-select" id="project" name="project">
             <option value="">All projects</option>
@@ -694,6 +791,21 @@ function renderTickets(params) {
                 (project) => `
                   <option value="${project.id}" ${String(project.id) === filters.project ? "selected" : ""}>
                     ${escapeHtml(project.name)}
+                  </option>
+                `,
+              )
+              .join("")}
+          </select>
+        </div>
+        <div class="col-6 col-lg">
+          <label class="form-label" for="category">Category</label>
+          <select class="form-select" id="category" name="category">
+            <option value="">All categories</option>
+            ${state.categories
+              .map(
+                (category) => `
+                  <option value="${category.id}" ${String(category.id) === filters.category ? "selected" : ""}>
+                    ${escapeHtml(category.name)}
                   </option>
                 `,
               )
@@ -994,7 +1106,7 @@ function renderReferences(kind) {
                 ? ticket.projectId === record.id
                 : ticket.categoryId === record.id,
             ).length;
-            const href = isProject ? `#/tickets?project=${record.id}` : "#/tickets";
+            const href = `#/tickets?${isProject ? "project" : "category"}=${record.id}`;
             return `
               <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3" href="${href}">
                 <span class="reference-name">${escapeHtml(record.name)}</span>
@@ -1111,6 +1223,12 @@ function handleTicketSubmit(form) {
     return;
   }
 
+  if (!isDueDate(record.dueDate)) {
+    queueAlert("Choose a valid due date or leave it blank.", "danger");
+    renderAlert();
+    return;
+  }
+
   if (existing) {
     const index = state.tickets.findIndex((ticket) => ticket.id === existing.id);
     state.tickets[index] = record;
@@ -1168,6 +1286,12 @@ document.addEventListener("submit", (event) => {
 });
 
 document.addEventListener("click", (event) => {
+  if (event.target.closest(".skip-link")) {
+    event.preventDefault();
+    document.getElementById("main").focus();
+    return;
+  }
+
   const deleteButton = event.target.closest("[data-delete-ticket]");
   if (deleteButton) {
     showDeleteModal(Number(deleteButton.dataset.deleteTicket));

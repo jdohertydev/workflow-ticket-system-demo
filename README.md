@@ -34,7 +34,7 @@ The demo supports:
 - project and category reference views
 - responsive desktop and mobile layouts
 - browser-local persistence with `localStorage`
-- one-click **Reset Demo**
+- **Reset Demo** control with confirmation
 
 The fictional workflow covers realistic software-team work such as:
 
@@ -112,7 +112,7 @@ All names and scenarios are fictional.
 
 ## Run locally
 
-There are no dependencies and no build step.
+There is no dependency installation or build step.
 
 ```bash
 python -m http.server 8000
